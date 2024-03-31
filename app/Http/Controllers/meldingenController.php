@@ -1,28 +1,53 @@
 <?php
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $attractie = $_POST['attractie'];
+    $type = $_POST['type'];
+    $capaciteit = $_POST['capaciteit'];
 
-//Variabelen vullen
-$attractie = $_POST['attractie'];
-$capaciteit = $_POST['capaciteit'];
-$melder = $_POST['melder'];
+    if(isset($_POST['prioriteit'])) {
+        $prioriteit = true;
+    } else {
+        $prioriteit = false;
+    }
+    
+    $melder = $_POST['melder'];
+    $overig = $_POST['overig'];
 
-echo $attractie . " / " . $capaciteit . " / " . $melder;
+    if (empty($attractie)) {
+        $errors[] = "Vul de attractie-naam in.";
+    }
+    if (empty($type)) {
+        $errors[] = "Kies een type.";
+    }
+    if (!is_numeric($capaciteit)) {
+        $errors[] = "Vul voor capaciteit een geldig getal in.";
+    }
+    if (empty($melder)) {
+        $errors[] = "Vul de naam van de melder in.";
+    }
+  
+    
+    // Connection
+    require_once __DIR__ . '/../../config/conn.php'; 
 
-//1. Verbinding
-require_once '../../../config/conn.php';
+    // Query
+    $query = "INSERT INTO meldingen (attractie, type, capaciteit, prioriteit, melder, overige_info) VALUES (:attractie, :type, :capaciteit, :prioriteit, :melder, :overig)";
 
-//2. Query
-$type = "standaardwaarde"; // Je kunt hier een standaardwaarde toewijzen of deze uit het formulier halen, afhankelijk van jouw vereisten
+    // Prepare
+    $statement = $conn->prepare($query);
 
-$query = "INSERT INTO meldingen (attractie, capaciteit, melder, type) VALUES(:attractie, :capaciteit, :melder, :type)";
+    // Execute
+    $statement->execute([
+        ":attractie" => $attractie,
+        ":type" => $type,
+        ":capaciteit" => $capaciteit,
+        ":prioriteit" => $prioriteit,
+        ":melder" => $melder,
+        ":overig" => $overig
+    ]);
 
-
-
-//3. Prepare
-$statement = $conn->prepare($query);
-
-//4. Execute
-$statement->execute([
-    ":attractie" => $attractie,
-    ":capaciteit" => $capaciteit,
-    ":melder" => $melder
-]);
+    // Redirect
+    header("Location: ../meldingen/index.php?msg=Melding opgeslagen");
+    exit; // Ensure no further code execution after redirection
+}
+?>
